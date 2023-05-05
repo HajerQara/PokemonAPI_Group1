@@ -1,20 +1,98 @@
-// PokemonAPI_Group1.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
-
 #include <iostream>
+#include <string>
+#include<list>
+#include <vector>
+#include <cstdlib>
+#include "HttpClient.h"
 
-int main()
+// Quell the nlohmann::json warnings.
+#pragma warning( push )
+#pragma warning(disable:28020)
+#include "json.hpp"
+#pragma warning( pop )
+
+using namespace std;
+using json = nlohmann::json;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+
+template <class T, class S>
+class Pokemon : public  HttpClient 
 {
-    std::cout << "Hello World!\n";
+private:
+    vector<char> data;
+    T it;
+
+public:
+	Pokemon() {};
+	~Pokemon() {};
+
+	S& operator[](int i)
+	{
+		assert(0 <= i && i < data.size());
+		return *data[i];
+	};
+
+	Pokemon<T, S> operator ++(int i)
+	{
+		return *this++;
+	};
+
+protected:
+	virtual void StartOfData() {};
+
+	virtual void Data(const char arrData[], const unsigned int iSize)
+	{
+		data.insert(data.end(), arrData, arrData + iSize);
+	};
+
+	virtual void EndOfData()
+	{
+		ParseJson();
+
+	};
+};
+
+// Define operator<< as a standalone function
+template <class T, class S>
+std::ostream& operator<<(std::ostream& cout, const Pokemon<T, S>& pc) {
+	cout << pc << endl;
+	return cout;
+};
+
+class PokemonAPI 
+{
+public:
+	struct Pokemon 
+	{
+		string name;
+
+	
+	};
+	void ParseJson(const json& jp)
+	{
+		for (auto it = jp.begin(); it != jp.end(); ++it)
+		{
+
+		};
+	};
+
+private:
+	Pokemon poki;
+	vector<Pokemon> Pokemons;
+
+
+};
+
+
+int main(int argc, char* argv[])
+{
+	Pokemon<PokemonAPI,PokemonAPI::Pokemon> p;
+	p.Connect("pokeapi.co");
+	p.Get("/api/v2/pokemon/");
+
+	return 0;
+
 }
-
-// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
-// Debug program: F5 or Debug > Start Debugging menu
-
-// Tips for Getting Started: 
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file
