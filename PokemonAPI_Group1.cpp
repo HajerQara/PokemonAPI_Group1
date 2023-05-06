@@ -1,6 +1,6 @@
 #include <iostream>
 #include <string>
-#include<list>
+#include <list>
 #include <vector>
 #include <cstdlib>
 #include "HttpClient.h"
@@ -70,6 +70,70 @@ std::ostream& operator<<(std::ostream& cout, const Pokemon<T, S>& pc) {
 	return cout;
 };
 
+class PokemonTypeData
+{
+public:
+	struct TypeData
+	{
+		string TypeName;
+		list<PokemonAPI::POKETYPES> DoubleDamageTo;
+		list<PokemonAPI::POKETYPES> HalfDamageTo;
+		list<PokemonAPI::POKETYPES> NoDamageTo;
+		list<PokemonAPI::POKETYPES> DoubleDamageFrom;
+		list<PokemonAPI::POKETYPES> HalfDamageFrom;
+		list<PokemonAPI::POKETYPES> NoDamageFrom;
+	};
+
+	map<PokemonAPI::POKETYPES, TypeData> TypeStrengthsAndWeaknesses;
+
+	PokemonTypeData();
+};
+
+PokemonTypeData::PokemonTypeData()
+{
+	const string ALL_TYPES[] = 
+	{ 
+		"normal", "fire", "water", "grass", "electric", "ice", "fighting", "poison", "ground", "flying",
+		"psychic", "bug", "rock", "ghost", "dark", "dragon", "steel", "fairy"
+	};
+
+	const string ALL_DAMAGE_KEYS[] = 
+	{
+		"double_damage_from", "double_damage_to", "half_damage_from", "half_damage_to", "no_damage_from", "no_damage_to"
+	};
+
+	TypeData temp_struct;
+
+	Pokemon<PokemonAPI, PokemonAPI::Pokemon> temp_server;
+	temp_server.Connect("pokeapi.co");
+
+	for (string t : ALL_TYPES)
+	{
+		// Temporarily using pseudo code
+		/*
+		temp_server.Get("/api/v2/type/" + t);
+		
+		temp_struct.TypeName = t;
+		temp_struct.DoubleDamageTo.clear();
+		temp_struct.HalfDamageTo.clear();
+		temp_struct.NoDamageTo.clear();
+		temp_struct.DoubleDamageFrom.clear();
+		temp_struct.HalfDamageFrom.clear();
+		temp_struct.NoDamageFrom.clear();
+
+		for (auto obj : json_data["damage_relations"]["double_damage_from"])
+		{
+			temp_struct.DoubleDamageFrom.insert(PokemonAPI::StringToType(obj.name));
+		}
+
+		// repeat until all finished
+
+
+		TypeStrengthsAndWeaknesses.insert(PokemonAPI::StringToType(t), temp_struct)
+		*/
+	}
+}
+
 class PokemonAPI 
 {
 public:
@@ -92,7 +156,8 @@ public:
 		DARK, 
 		DRAGON, 
 		STEEL, 
-		FAIRY
+		FAIRY,
+		UNKNOWN
 	};
 
 	struct Pokemon 
@@ -101,6 +166,7 @@ public:
 		vector<string> weaknesses;
 	
 	};
+
 	void ParseJson(const json& jp)
 	{
 		for (auto it = jp.begin(); it != jp.end(); ++it)
@@ -134,6 +200,7 @@ public:
 	};
 
 	static string TypeToString(POKETYPES t);
+	static POKETYPES StringToType(string s);
 
 private:
 	Pokemon poki;
@@ -143,98 +210,98 @@ private:
 string PokemonAPI::TypeToString(POKETYPES t)
 {
 	// Converts the enum POKETYPES to a string for ease of printing
-	string type_to_print = "Unknown";
+	string type_to_print = "unknown";
 
 	switch (t)
 	{
 	case NORMAL:
 	{
-		type_to_print = "Normal";
+		type_to_print = "normal";
 		break;
 	}
 	case FIRE:
 	{
-		type_to_print = "Fire";
+		type_to_print = "fire";
 		break;
 	}
 	case WATER:
 	{
-		type_to_print = "Water";
+		type_to_print = "water";
 		break;
 	}
 	case GRASS:
 	{
-		type_to_print = "Grass";
+		type_to_print = "grass";
 		break;
 	}
 	case ELECTRIC:
 	{
-		type_to_print = "Electric";
+		type_to_print = "electric";
 		break;
 	}
 	case ICE:
 	{
-		type_to_print = "Ice";
+		type_to_print = "ice";
 		break;
 	}
 	case FIGHTING:
 	{
-		type_to_print = "Fighting";
+		type_to_print = "fighting";
 		break;
 	}
 	case POISON:
 	{
-		type_to_print = "Poison";
+		type_to_print = "poison";
 		break;
 	}
 	case GROUND:
 	{
-		type_to_print = "Ground";
+		type_to_print = "ground";
 		break;
 	}
 	case FLYING:
 	{
-		type_to_print = "Flying";
+		type_to_print = "flying";
 		break;
 	}
 	case PSYCHIC:
 	{
-		type_to_print = "Psychic";
+		type_to_print = "psychic";
 		break;
 	}
 	case BUG:
 	{
-		type_to_print = "Bug";
+		type_to_print = "bug";
 		break;
 	}
 	case ROCK:
 	{
-		type_to_print = "Rock";
+		type_to_print = "rock";
 		break;
 	}
 	case GHOST:
 	{
-		type_to_print = "Ghost";
+		type_to_print = "ghost";
 		break;
 	}
 	case DARK:
 	{
-		type_to_print = "Dark";
+		type_to_print = "dark";
 		break;
 	}
 	case DRAGON:
 	{
-		type_to_print = "Dragon";
+		type_to_print = "dragon";
 		break;
 	}
 	case STEEL:
 	{
-		type_to_print = "Steel";
+		type_to_print = "steel";
 		break;
 	}
 	case FAIRY:
 	{
-		type_to_print = "Fairy";
+		type_to_print = "fairy";
 		break;
 	}
 	default:
@@ -242,6 +309,30 @@ string PokemonAPI::TypeToString(POKETYPES t)
 	}
 
 	return type_to_print;
+}
+
+PokemonAPI::POKETYPES PokemonAPI::StringToType(string s)
+{
+	// Converts the a string to the enum POKETYPES
+	POKETYPES type_to_get = UNKNOWN;
+	map<string, POKETYPES> StringTypeMap = {
+		{"normal", NORMAL}, {"fire", FIRE}, {"water", WATER}, {"grass", GRASS }, 
+		{"electric", ELECTRIC }, {"ice", ICE}, { "fighting", FIGHTING}, { "poison", POISON},
+		{ "ground", GROUND}, { "flying", FLYING}, { "psychic", PSYCHIC}, { "bug", BUG},
+		{ "rock", ROCK }, { "ghost", GHOST}, { "dark", DARK}, { "dragon", DRAGON},
+		{ "steel", STEEL}, { "fairy", FAIRY}, { "unknown", UNKNOWN}
+	};
+	
+	try
+	{
+		type_to_get = StringTypeMap[s];
+	}
+	catch (...) // If the string isn't in the map, or any other error comes up, just returns UNKNOWN 
+	{
+		type_to_get = UNKNOWN;
+	}
+
+	return type_to_get;
 }
 
 int main(int argc, char* argv[])
