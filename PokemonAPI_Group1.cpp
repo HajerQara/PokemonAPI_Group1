@@ -133,11 +133,116 @@ public:
 		return result;
 	};
 
+	static string TypeToString(POKETYPES t);
+
 private:
 	Pokemon poki;
 	vector<Pokemon> Pokemons;
 };
 
+string PokemonAPI::TypeToString(POKETYPES t)
+{
+	// Converts the enum POKETYPES to a string for ease of printing
+	string type_to_print = "Unknown";
+
+	switch (t)
+	{
+	case NORMAL:
+	{
+		type_to_print = "Normal";
+		break;
+	}
+	case FIRE:
+	{
+		type_to_print = "Fire";
+		break;
+	}
+	case WATER:
+	{
+		type_to_print = "Water";
+		break;
+	}
+	case GRASS:
+	{
+		type_to_print = "Grass";
+		break;
+	}
+	case ELECTRIC:
+	{
+		type_to_print = "Electric";
+		break;
+	}
+	case ICE:
+	{
+		type_to_print = "Ice";
+		break;
+	}
+	case FIGHTING:
+	{
+		type_to_print = "Fighting";
+		break;
+	}
+	case POISON:
+	{
+		type_to_print = "Poison";
+		break;
+	}
+	case GROUND:
+	{
+		type_to_print = "Ground";
+		break;
+	}
+	case FLYING:
+	{
+		type_to_print = "Flying";
+		break;
+	}
+	case PSYCHIC:
+	{
+		type_to_print = "Psychic";
+		break;
+	}
+	case BUG:
+	{
+		type_to_print = "Bug";
+		break;
+	}
+	case ROCK:
+	{
+		type_to_print = "Rock";
+		break;
+	}
+	case GHOST:
+	{
+		type_to_print = "Ghost";
+		break;
+	}
+	case DARK:
+	{
+		type_to_print = "Dark";
+		break;
+	}
+	case DRAGON:
+	{
+		type_to_print = "Dragon";
+		break;
+	}
+	case STEEL:
+	{
+		type_to_print = "Steel";
+		break;
+	}
+	case FAIRY:
+	{
+		type_to_print = "Fairy";
+		break;
+	}
+	default:
+		break;
+	}
+
+	return type_to_print;
+}
 
 int main(int argc, char* argv[])
 {
