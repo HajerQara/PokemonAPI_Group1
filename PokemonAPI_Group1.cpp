@@ -50,7 +50,15 @@ protected:
 
 	virtual void EndOfData()
 	{
-		ParseJson();
+		/*ParseJson();*/
+		// Convert the vector<char> to a string
+		string dataStr(data.begin(), data.end());
+
+		// Parse the JSON string
+		json jsonData = json::parse(dataStr);
+
+		// Call the ParseJson method with the parsed JSON data
+		it.ParseJson(jsonData);
 
 	};
 };
@@ -90,22 +98,44 @@ public:
 	struct Pokemon 
 	{
 		string name;
-
+		vector<string> weaknesses;
 	
 	};
 	void ParseJson(const json& jp)
 	{
 		for (auto it = jp.begin(); it != jp.end(); ++it)
 		{
+			Pokemon p;
+			p.name = it.value().at("name");
 
+			// Get the weaknesses for the pokemon
+			auto weaknesses = it.value().at("weaknesses");
+			for (auto& w : weaknesses)
+			{
+				p.weaknesses.push_back(w);
+			}
+
+			Pokemons.push_back(p);
 		};
+	};
+
+	// Method to search for Pokemon by weakness
+	vector<Pokemon> pokemonWeakness(const string& weakness) const
+	{
+		vector<Pokemon> result;
+		for (const auto& p : Pokemons)
+		{
+			if (find(p.weaknesses.begin(), p.weaknesses.end(), weakness) != p.weaknesses.end())
+			{
+				result.push_back(p);
+			}
+		}
+		return result;
 	};
 
 private:
 	Pokemon poki;
 	vector<Pokemon> Pokemons;
-
-
 };
 
 
