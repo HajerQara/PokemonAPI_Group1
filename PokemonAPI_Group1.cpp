@@ -65,6 +65,28 @@ std::ostream& operator<<(std::ostream& cout, const Pokemon<T, S>& pc) {
 class PokemonAPI 
 {
 public:
+	enum POKETYPES
+	{
+		NORMAL, 
+		FIRE, 
+		WATER, 
+		GRASS, 
+		ELECTRIC, 
+		ICE, 
+		FIGHTING, 
+		POISON,
+		GROUND, 
+		FLYING, 
+		PSYCHIC, 
+		BUG, 
+		ROCK, 
+		GHOST, 
+		DARK, 
+		DRAGON, 
+		STEEL, 
+		FAIRY
+	};
+
 	struct Pokemon 
 	{
 		string name;
