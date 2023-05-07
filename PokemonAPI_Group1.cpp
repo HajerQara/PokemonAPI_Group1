@@ -130,12 +130,8 @@ PokemonTypeData::PokemonTypeData()
 
 	for (string t : ALL_TYPES)
 	{
-		// Temporarily using pseudo code
-		/*
 		// Get automatically calls ParseJson at end of data
 		temp_server.Get("/api/v2/type/" + t);
-
-		*/
 	}
 }
 
@@ -278,9 +274,18 @@ public:
 	static POKETYPES StringToType(string s);
 	static POKETYPES TypeWeakness(POKETYPES t, Pokemon p);
 
+	int GetTotalPages(int TotalResults)
+	{ 
+		return round(TotalResults / TOTAL_PER_PAGE); 
+	}
+
+	int current_page = 1;
+	const int TOTAL_PER_PAGE = 10;
+
 private:
 	Pokemon poke;
 	vector<Pokemon> Pokemons;
+	
 };
 
 string PokemonAPI::TypeToString(POKETYPES t)
@@ -581,6 +586,8 @@ int main(int argc, char* argv[])
 	string search_term = "";
 	int c = 0; // The char that is being accessed whenever a key is pressed
 
+	int TotalResultsFromSearch = 0;
+
 	// App header on start
 	cout << "|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl
 		<< "||||||||||||||| Welcome to the Pokemon App! |||||||||||||||||||||" << endl
@@ -607,9 +614,9 @@ int main(int argc, char* argv[])
 		{
 			cout << "Searching by name..." << endl;
 			search_term = EnterSearchTerm();
-			// uc.current_page = 1;
-			// uc.Get("/search/photos", { {"query", search_term}, {"page", to_string(uc.current_page)} });
-			// cout << uc << endl;
+			// p.current_page = 1;
+			// p.Get("/api/v2/pokemon/" + search_term);
+			// cout << p << endl;
 		}
 
 		// Searching by Type
@@ -617,31 +624,34 @@ int main(int argc, char* argv[])
 		{
 			cout << "Searching by type..." << endl;
 			search_term = EnterSearchTerm();
+			// p.current_page = 1;
+			// p.Get("/api/v2/type/" + search_term);
+			// cout << p << endl;
 		}
 
 		// If going to the previous page:
 		else if (c == ARROW_UP)
 		{
-			/*if (uc.current_page == 1)
+			/*if (p.current_page == 1)
 				cout << "No pages further back!" << endl;
 			else
 			{
-				uc.current_page += 1;
-				uc.Get("/search/photos", { {"query", search_term}, {"page", to_string(uc.current_page)} });
-				cout << uc << endl;
+				p.current_page += 1;
+				
+				cout << p << endl;
 			}*/
 		}
 
 		// If going to the next page:
 		else if (c == ARROW_DOWN)
 		{
-			/*if (uc.current_page == uc.GetTotalPages())
+			/*if (p.current_page == p.GetTotalPages(TotalResultsFromSearch))
 				cout << "No more pages left!" << endl;
 			else
 			{
-				uc.current_page -= 1;
-				uc.Get("/search/photos", { {"query", search_term}, {"page", to_string(uc.current_page)} });
-				cout << uc << endl;
+				p.current_page -= 1;
+				
+				cout << p << endl;
 			}*/
 		}
 
