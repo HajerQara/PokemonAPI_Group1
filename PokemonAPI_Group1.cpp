@@ -84,9 +84,12 @@ public:
 		list<PokemonAPI::POKETYPES> NoDamageFrom;
 	};
 
-	map<PokemonAPI::POKETYPES, TypeData> TypeStrengthsAndWeaknesses;
-
 	PokemonTypeData();
+	// GetStrengths() const;
+
+private:
+	map<PokemonAPI::POKETYPES, TypeData> TypeStrengthsAndWeaknesses;
+	void ParseJson(json j);
 };
 
 PokemonTypeData::PokemonTypeData()
@@ -97,13 +100,6 @@ PokemonTypeData::PokemonTypeData()
 		"psychic", "bug", "rock", "ghost", "dark", "dragon", "steel", "fairy"
 	};
 
-	const string ALL_DAMAGE_KEYS[] = 
-	{
-		"double_damage_from", "double_damage_to", "half_damage_from", "half_damage_to", "no_damage_from", "no_damage_to"
-	};
-
-	TypeData temp_struct;
-
 	Pokemon<PokemonAPI, PokemonAPI::Pokemon> temp_server;
 	temp_server.Connect("pokeapi.co");
 
@@ -111,26 +107,77 @@ PokemonTypeData::PokemonTypeData()
 	{
 		// Temporarily using pseudo code
 		/*
+		// Get automatically calls ParseJson at end of data
 		temp_server.Get("/api/v2/type/" + t);
-		
-		temp_struct.TypeName = t;
-		temp_struct.DoubleDamageTo.clear();
-		temp_struct.HalfDamageTo.clear();
-		temp_struct.NoDamageTo.clear();
-		temp_struct.DoubleDamageFrom.clear();
-		temp_struct.HalfDamageFrom.clear();
-		temp_struct.NoDamageFrom.clear();
 
-		for (auto obj : json_data["damage_relations"]["double_damage_from"])
+		*/
+	}
+}
+
+void PokemonTypeData::ParseJson(json j)
+{
+	TypeData temp_struct;
+
+	temp_struct.TypeName = j["name"].get<string>();
+
+	if (j.contains("damage_relations"))
+	{
+		auto obj = j["damage_relations"];
+		
+		// Takes the name of each type, converts to the enum PokeTypes, and emplaces in the proper list
+		if (obj.contains("double_damage_from"))
 		{
-			temp_struct.DoubleDamageFrom.insert(PokemonAPI::StringToType(obj.name));
+			for (auto s : obj["double_damage_from"])
+			{
+				temp_struct.DoubleDamageFrom.emplace_back(
+					PokemonAPI::StringToType(s["name"].get<string>()));
+			}
 		}
 
-		// repeat until all finished
+		if (obj.contains("half_damage_from"))
+		{
+			for (auto s : obj["half_damage_from"])
+			{
+				temp_struct.HalfDamageFrom.emplace_back(
+					PokemonAPI::StringToType(s["name"].get<string>()));
+			}
+		}
 
+		if (obj.contains("no_damage_from"))
+		{
+			for (auto s : obj["no_damage_from"])
+			{
+				temp_struct.NoDamageFrom.emplace_back(
+					PokemonAPI::StringToType(s["name"].get<string>()));
+			}
+		}
 
-		TypeStrengthsAndWeaknesses.insert(PokemonAPI::StringToType(t), temp_struct)
-		*/
+		if (obj.contains("double_damage_to"))
+		{
+			for (auto s : obj["double_damage_to"])
+			{
+				temp_struct.DoubleDamageTo.emplace_back(
+					PokemonAPI::StringToType(s["name"].get<string>()));
+			}
+		}
+
+		if (obj.contains("half_damage_to"))
+		{
+			for (auto s : obj["half_damage_to"])
+			{
+				temp_struct.HalfDamageTo.emplace_back(
+					PokemonAPI::StringToType(s["name"].get<string>()));
+			}
+		}
+
+		if (obj.contains("no_damage_to"))
+		{
+			for (auto s : obj["no_damage_to"])
+			{
+				temp_struct.NoDamageTo.emplace_back(
+					PokemonAPI::StringToType(s["name"].get<string>()));
+			}
+		}
 	}
 }
 
