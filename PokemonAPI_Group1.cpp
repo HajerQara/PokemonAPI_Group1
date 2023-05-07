@@ -531,7 +531,7 @@ PokemonAPI::POKETYPES PokemonAPI::StringToType(string s)
 	{
 		type_to_get = UNKNOWN;
 	}
-
+	
 	return type_to_get;
 }
 
