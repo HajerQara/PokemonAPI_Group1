@@ -107,9 +107,8 @@ public:
 		list<PokemonAPI::POKETYPES> NoDamageFrom;
 	};
 
-	map<PokemonAPI::POKETYPES, TypeData> TypeStrengthsAndWeaknesses;
-
 	PokemonTypeData();
+	// GetStrengths() const;
 
 private:
 	map<PokemonAPI::POKETYPES, TypeData> TypeStrengthsAndWeaknesses;
@@ -124,13 +123,6 @@ PokemonTypeData::PokemonTypeData()
 		"psychic", "bug", "rock", "ghost", "dark", "dragon", "steel", "fairy"
 	};
 
-	const string ALL_DAMAGE_KEYS[] =
-	{
-		"double_damage_from", "double_damage_to", "half_damage_from", "half_damage_to", "no_damage_from", "no_damage_to"
-	};
-
-	TypeData temp_struct;
-
 	Pokemon<PokemonAPI, PokemonAPI::Pokemon> temp_server;
 	temp_server.Connect("pokeapi.co");
 
@@ -138,24 +130,11 @@ PokemonTypeData::PokemonTypeData()
 	{
 		// Temporarily using pseudo code
 		/*
+		// Get automatically calls ParseJson at end of data
 		temp_server.Get("/api/v2/type/" + t);
 
-		temp_struct.TypeName = t;
-		temp_struct.DoubleDamageTo.clear();
-		temp_struct.HalfDamageTo.clear();
-		temp_struct.NoDamageTo.clear();
-		temp_struct.DoubleDamageFrom.clear();
-		temp_struct.HalfDamageFrom.clear();
-		temp_struct.NoDamageFrom.clear();
-		for (auto obj : json_data["damage_relations"]["double_damage_from"])
-		{
-			temp_struct.DoubleDamageFrom.insert(PokemonAPI::StringToType(obj.name));
-		}
-		// repeat until all finished
-		TypeStrengthsAndWeaknesses.insert(PokemonAPI::StringToType(t), temp_struct)
 		*/
 	}
-
 }
 
 void PokemonTypeData::ParseJson(json j)
@@ -167,7 +146,7 @@ void PokemonTypeData::ParseJson(json j)
 	if (j.contains("damage_relations"))
 	{
 		auto obj = j["damage_relations"];
-
+		
 		// Takes the name of each type, converts to the enum PokeTypes, and emplaces in the proper list
 		if (obj.contains("double_damage_from"))
 		{
@@ -530,36 +509,37 @@ PokemonAPI::POKETYPES PokemonAPI::TypeWeakness(POKETYPES t, Pokemon p)
 	return t;
 
 	};
+}
 
-	PokemonAPI::POKETYPES PokemonAPI::StringToType(string s)
+PokemonAPI::POKETYPES PokemonAPI::StringToType(string s)
+{
+	// Converts the a string to the enum POKETYPES
+	POKETYPES type_to_get = UNKNOWN;
+	map<string, POKETYPES> StringTypeMap = {
+		{"normal", NORMAL}, {"fire", FIRE}, {"water", WATER}, {"grass", GRASS },
+		{"electric", ELECTRIC }, {"ice", ICE}, { "fighting", FIGHTING}, { "poison", POISON},
+		{ "ground", GROUND}, { "flying", FLYING}, { "psychic", PSYCHIC}, { "bug", BUG},
+		{ "rock", ROCK }, { "ghost", GHOST}, { "dark", DARK}, { "dragon", DRAGON},
+		{ "steel", STEEL}, { "fairy", FAIRY}, { "unknown", UNKNOWN}
+	};
+
+	try
 	{
-		// Converts the a string to the enum POKETYPES
-		POKETYPES type_to_get = UNKNOWN;
-		map<string, POKETYPES> StringTypeMap = {
-			{"normal", NORMAL}, {"fire", FIRE}, {"water", WATER}, {"grass", GRASS },
-			{"electric", ELECTRIC }, {"ice", ICE}, { "fighting", FIGHTING}, { "poison", POISON},
-			{ "ground", GROUND}, { "flying", FLYING}, { "psychic", PSYCHIC}, { "bug", BUG},
-			{ "rock", ROCK }, { "ghost", GHOST}, { "dark", DARK}, { "dragon", DRAGON},
-			{ "steel", STEEL}, { "fairy", FAIRY}, { "unknown", UNKNOWN}
-		};
-
-		try
-		{
-			type_to_get = StringTypeMap[s];
-		}
-		catch (...) // If the string isn't in the map, or any other error comes up, just returns UNKNOWN 
-		{
-			type_to_get = UNKNOWN;
-		}
-
-		return type_to_get;
+		type_to_get = StringTypeMap[s];
 	}
-
-	int main(int argc, char* argv[])
+	catch (...) // If the string isn't in the map, or any other error comes up, just returns UNKNOWN 
 	{
-		Pokemon<PokemonAPI, PokemonAPI::Pokemon> p;
-		p.Connect("pokeapi.co");
-		p.Get("/api/v2/pokemon/");
-
-		return 0;
+		type_to_get = UNKNOWN;
 	}
+	
+	return type_to_get;
+}
+
+int main(int argc, char* argv[])
+{
+	Pokemon<PokemonAPI, PokemonAPI::Pokemon> p;
+	p.Connect("pokeapi.co");
+	p.Get("/api/v2/pokemon/");
+
+	return 0;
+}
