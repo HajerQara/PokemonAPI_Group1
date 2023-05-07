@@ -19,11 +19,11 @@ using json = nlohmann::json;
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
 template <class T, class S>
-class Pokemon : public  HttpClient 
+class Pokemon : public  HttpClient
 {
 private:
-    vector<char> data;
-    T it;
+	vector<char> data;
+	T it;
 
 public:
 	Pokemon() {};
@@ -50,17 +50,40 @@ protected:
 
 	virtual void EndOfData()
 	{
-		/*ParseJson();*/
-		// Convert the vector<char> to a string
-		string dataStr(data.begin(), data.end());
+		///* Convert the vector<char> to a string
+		//string dataStr(data.begin(), data.end());
 
 		// Parse the JSON string
-		json jsonData = json::parse(dataStr);
+		//json jsonData = json::parse(dataStr);
 
 		// Call the ParseJson method with the parsed JSON data
-		it.ParseJson(jsonData);
+		//it.ParseJson(jsonData);*/
+
+		ParseJson();
 
 	};
+
+	void ParseJson()
+	{
+		// Parse the JSON data
+		json jp = json::parse(jsonData);
+
+		// Finds out how many pokemon's in the query 
+		size_t pokeCount = jp["results"].size();
+
+		poke = new Poke * [pokeCount]; //creates an array that can hold all pokemons based on how many are queried
+
+		for (size_t i = 0; i < pokeCount; i++)
+		{
+			poke[i] = new Poke;
+
+			poke[i]->name = jp["results"][i]["name"].get<string>;
+			poke[i]->abilities = jp["results"][i]["name"]["abilities"][i]["ability"][i].get<string>;
+
+
+		};
+
+	}
 };
 
 // Define operator<< as a standalone function
@@ -94,8 +117,8 @@ private:
 
 PokemonTypeData::PokemonTypeData()
 {
-	const string ALL_TYPES[] = 
-	{ 
+	const string ALL_TYPES[] =
+	{
 		"normal", "fire", "water", "grass", "electric", "ice", "fighting", "poison", "ground", "flying",
 		"psychic", "bug", "rock", "ghost", "dark", "dragon", "steel", "fairy"
 	};
@@ -179,42 +202,44 @@ void PokemonTypeData::ParseJson(json j)
 			}
 		}
 	}
+
 }
 
-class PokemonAPI 
+class PokemonAPI
 {
 public:
 	enum POKETYPES
 	{
-		NORMAL, 
-		FIRE, 
-		WATER, 
-		GRASS, 
-		ELECTRIC, 
-		ICE, 
-		FIGHTING, 
+		NORMAL,
+		FIRE,
+		WATER,
+		GRASS,
+		ELECTRIC,
+		ICE,
+		FIGHTING,
 		POISON,
-		GROUND, 
-		FLYING, 
-		PSYCHIC, 
-		BUG, 
-		ROCK, 
-		GHOST, 
-		DARK, 
-		DRAGON, 
-		STEEL, 
+		GROUND,
+		FLYING,
+		PSYCHIC,
+		BUG,
+		ROCK,
+		GHOST,
+		DARK,
+		DRAGON,
+		STEEL,
 		FAIRY,
 		UNKNOWN
 	};
 
-	struct Pokemon 
+	struct Pokemon
 	{
 		string name;
+		vector<string> abilities;
 		vector<string> weaknesses;
-	
+
 	};
 
-	void ParseJson(const json& jp)
+	void ParseWeakness(const json& jp)
 	{
 		for (auto it = jp.begin(); it != jp.end(); ++it)
 		{
@@ -232,6 +257,7 @@ public:
 		};
 	};
 
+
 	// Method to search for Pokemon by weakness
 	vector<Pokemon> pokemonWeakness(const string& weakness) const
 	{
@@ -248,9 +274,10 @@ public:
 
 	static string TypeToString(POKETYPES t);
 	static POKETYPES StringToType(string s);
+	static string TypeWeakness(POKETYPES t);
 
 private:
-	Pokemon poki;
+	Pokemon poke;
 	vector<Pokemon> Pokemons;
 };
 
@@ -358,18 +385,144 @@ string PokemonAPI::TypeToString(POKETYPES t)
 	return type_to_print;
 }
 
+//a function to see pokemons weakness by comparing its type 
+string PokemonAPI::TypeWeakness(POKETYPES t)
+{
+	string weak;
+	switch (t)
+	{
+	case NORMAL:
+	{
+		weak = "Rock, Ghost, Steel";
+		weaknesses.push_back(weak);
+		break;
+	}
+	case FIRE:
+	{
+		weak = "Ground, Rock, Water";
+		weaknesses.push_back(weak);
+		break;
+	}
+	case WATER:
+	{
+		weak = "Grass, Dragon, Electric";
+		weaknesses.push_back(weak);
+		break;
+	}
+	case GRASS:
+	{
+		weak = "Flying, Poison, Bug, Steel, Fire, Grass, Dragon, Ice";
+		weaknesses.push_back(weak);
+		break;
+	}
+	case ELECTRIC:
+	{
+		weak = "Ground, Grass, Electric, Dragon";
+		weaknesses.push_back(weak);
+		break;
+	}
+	case ICE:
+	{
+		weak = "Steel, Fire, Water,Rock, Fighting";
+		weaknesses.push_back(weak);
+		break;
+	}
+	case FIGHTING:
+	{
+		weak = "Flying, Poison, Psychic, Bug, Ghost, Fairy";
+		weaknesses.push_back(weak);
+		break;
+	}
+	case POISON:
+	{
+		weak = "Psychic, Ground, Rock, Ghost, Steel";
+		weaknesses.push_back(weak);
+		break;
+	}
+	case GROUND:
+	{
+		weak = "Flying, Bug, Grass, Water, Ice";
+		weaknesses.push_back(weak);
+		break;
+	}
+	case FLYING:
+	{
+		weak = "Rock, Steel, Electric, Ice";
+		weaknesses.push_back(weak);
+		break;
+	}
+	case PSYCHIC:
+	{
+		weak = "Steel, Bug, Dark, Ghost";
+		weaknesses.push_back(weak);
+		break;
+	}
+	case BUG:
+	{
+		weak = "Fighting, Flying, Poison, Ghost, Steel, Fire, Fairy, Rock";
+		weaknesses.push_back(weak);
+		break;
+	}
+	case ROCK:
+	{
+		weak = "Fighting, Ground, Steel, Water, Grass";
+		weaknesses.push_back(weak);
+		break;
+	}
+	case GHOST:
+	{
+		weak = "Normal, Dark";
+		weaknesses.push_back(weak);
+		break;
+	}
+	case DARK:
+	{
+		weak = "Fighting, Dark, Fairy, Bug";
+		weaknesses.push_back(weak);
+		break;
+	}
+	case DRAGON:
+	{
+		weak = "Steel, Fairy, Ice";
+		weaknesses.push_back(weak);
+		break;
+	}
+	case STEEL:
+	{
+		weak = "Fire, Water, Electric, Fighting, Ground";
+		weaknesses.push_back(weak);
+		break;
+	}
+	case FAIRY:
+	{
+		weak = "Poison, Steel, Fire";
+		weaknesses.push_back(weak);
+		break;
+	}
+	default:
+	{
+		weak = "Unknown";
+		weaknesses.push_back(weak);
+		break;
+	}
+
+	return type_to_print;
+
+	};
+}
+
 PokemonAPI::POKETYPES PokemonAPI::StringToType(string s)
 {
 	// Converts the a string to the enum POKETYPES
 	POKETYPES type_to_get = UNKNOWN;
 	map<string, POKETYPES> StringTypeMap = {
-		{"normal", NORMAL}, {"fire", FIRE}, {"water", WATER}, {"grass", GRASS }, 
+		{"normal", NORMAL}, {"fire", FIRE}, {"water", WATER}, {"grass", GRASS },
 		{"electric", ELECTRIC }, {"ice", ICE}, { "fighting", FIGHTING}, { "poison", POISON},
 		{ "ground", GROUND}, { "flying", FLYING}, { "psychic", PSYCHIC}, { "bug", BUG},
 		{ "rock", ROCK }, { "ghost", GHOST}, { "dark", DARK}, { "dragon", DRAGON},
 		{ "steel", STEEL}, { "fairy", FAIRY}, { "unknown", UNKNOWN}
 	};
-	
+
 	try
 	{
 		type_to_get = StringTypeMap[s];
@@ -384,10 +537,9 @@ PokemonAPI::POKETYPES PokemonAPI::StringToType(string s)
 
 int main(int argc, char* argv[])
 {
-	Pokemon<PokemonAPI,PokemonAPI::Pokemon> p;
+	Pokemon<PokemonAPI, PokemonAPI::Pokemon> p;
 	p.Connect("pokeapi.co");
 	p.Get("/api/v2/pokemon/");
 
 	return 0;
-
 }
