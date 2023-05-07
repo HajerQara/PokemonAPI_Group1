@@ -4,6 +4,8 @@
 #include <vector>
 #include <cstdlib>
 #include "HttpClient.h"
+#include <conio.h>
+
 
 // Quell the nlohmann::json warnings.
 #pragma warning( push )
@@ -535,11 +537,115 @@ PokemonAPI::POKETYPES PokemonAPI::StringToType(string s)
 	return type_to_get;
 }
 
+string EnterSearchTerm()
+{
+	// Function for entering a search term. Pulled from the Unsplash code we worked on
+	string new_term = "";
+	char c = ' ';
+	const int KEY_ENTER = 13;
+	const int KEY_BACKSPACE = 8;
+
+	cout << "\nType new search term and then press enter: ";
+
+	while (c != KEY_ENTER)
+	{
+		c = _getch();
+
+		if (IsCharAlphaNumeric(c)) // Only allowing alphanumeric characters for search
+		{
+			new_term += c;
+			cout << c;
+		}
+
+		else if (c == KEY_BACKSPACE && new_term.size() > 0) // Only allows backspacing if the string isn't empty
+		{
+			new_term.pop_back();
+			cout << '\b' << " " << '\b'; // Backpaces, overwrites with a space, then backspaces again to put cursor at right position
+		}
+	}
+	cout << "\nNew Search Term: " << new_term << endl;
+	return new_term;
+}
+
 int main(int argc, char* argv[])
 {
+	// Key codes for use in UI
+	const int ARROW_UP = 72;
+	const int ARROW_DOWN = 80;
+	const int KEY_ESCAPE = 27;		// Exit button is ESCAPE
+	const int KEY_E = 101;		// Enter search term with E key
+	// const int KEY_O = 111;		// Unused
+	const int KEY_ENTER = 13;
+	const int KEY_T = 116;
+
+	string search_term = "";
+	int c = 0; // The char that is being accessed whenever a key is pressed
+
+	// App header on start
+	cout << "|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl
+		<< "||||||||||||||| Welcome to the Pokemon App! |||||||||||||||||||||" << endl
+		<< "|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl << endl;
+
+
 	Pokemon<PokemonAPI, PokemonAPI::Pokemon> p;
 	p.Connect("pokeapi.co");
 	p.Get("/api/v2/pokemon/");
+
+	while (c != KEY_ESCAPE)
+	{
+		cout << "Controls: \n\tExit: Escape Key\n\tSearch by Name: E Key or Enter Key\n\tSearch by Type: T"
+			<< "\n\tNext Page: Down Key\n\tPrevious Page: Up Key" << endl;
+
+		c = _getch();
+
+		// For testing what each key's integer value is
+		// cout << c << endl;
+
+
+		// Searching by Name
+		if (c == KEY_E || c == KEY_ENTER)
+		{
+			cout << "Searching by name..." << endl;
+			search_term = EnterSearchTerm();
+			// uc.current_page = 1;
+			// uc.Get("/search/photos", { {"query", search_term}, {"page", to_string(uc.current_page)} });
+			// cout << uc << endl;
+		}
+
+		// Searching by Type
+		else if (c == KEY_T)
+		{
+			cout << "Searching by type..." << endl;
+			search_term = EnterSearchTerm();
+		}
+
+		// If going to the previous page:
+		else if (c == ARROW_UP)
+		{
+			/*if (uc.current_page == 1)
+				cout << "No pages further back!" << endl;
+			else
+			{
+				uc.current_page += 1;
+				uc.Get("/search/photos", { {"query", search_term}, {"page", to_string(uc.current_page)} });
+				cout << uc << endl;
+			}*/
+		}
+
+		// If going to the next page:
+		else if (c == ARROW_DOWN)
+		{
+			/*if (uc.current_page == uc.GetTotalPages())
+				cout << "No more pages left!" << endl;
+			else
+			{
+				uc.current_page -= 1;
+				uc.Get("/search/photos", { {"query", search_term}, {"page", to_string(uc.current_page)} });
+				cout << uc << endl;
+			}*/
+		}
+
+	}
 
 	return 0;
 }
