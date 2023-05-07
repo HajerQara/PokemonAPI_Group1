@@ -107,8 +107,9 @@ public:
 		list<PokemonAPI::POKETYPES> NoDamageFrom;
 	};
 
+	map<PokemonAPI::POKETYPES, TypeData> TypeStrengthsAndWeaknesses;
+
 	PokemonTypeData();
-	// GetStrengths() const;
 
 private:
 	map<PokemonAPI::POKETYPES, TypeData> TypeStrengthsAndWeaknesses;
@@ -123,6 +124,13 @@ PokemonTypeData::PokemonTypeData()
 		"psychic", "bug", "rock", "ghost", "dark", "dragon", "steel", "fairy"
 	};
 
+	const string ALL_DAMAGE_KEYS[] =
+	{
+		"double_damage_from", "double_damage_to", "half_damage_from", "half_damage_to", "no_damage_from", "no_damage_to"
+	};
+
+	TypeData temp_struct;
+
 	Pokemon<PokemonAPI, PokemonAPI::Pokemon> temp_server;
 	temp_server.Connect("pokeapi.co");
 
@@ -130,11 +138,24 @@ PokemonTypeData::PokemonTypeData()
 	{
 		// Temporarily using pseudo code
 		/*
-		// Get automatically calls ParseJson at end of data
 		temp_server.Get("/api/v2/type/" + t);
 
+		temp_struct.TypeName = t;
+		temp_struct.DoubleDamageTo.clear();
+		temp_struct.HalfDamageTo.clear();
+		temp_struct.NoDamageTo.clear();
+		temp_struct.DoubleDamageFrom.clear();
+		temp_struct.HalfDamageFrom.clear();
+		temp_struct.NoDamageFrom.clear();
+		for (auto obj : json_data["damage_relations"]["double_damage_from"])
+		{
+			temp_struct.DoubleDamageFrom.insert(PokemonAPI::StringToType(obj.name));
+		}
+		// repeat until all finished
+		TypeStrengthsAndWeaknesses.insert(PokemonAPI::StringToType(t), temp_struct)
 		*/
 	}
+
 }
 
 void PokemonTypeData::ParseJson(json j)
@@ -146,7 +167,7 @@ void PokemonTypeData::ParseJson(json j)
 	if (j.contains("damage_relations"))
 	{
 		auto obj = j["damage_relations"];
-		
+
 		// Takes the name of each type, converts to the enum PokeTypes, and emplaces in the proper list
 		if (obj.contains("double_damage_from"))
 		{
@@ -274,7 +295,7 @@ public:
 
 	static string TypeToString(POKETYPES t);
 	static POKETYPES StringToType(string s);
-	static string TypeWeakness(POKETYPES t);
+	static POKETYPES TypeWeakness(POKETYPES t, Pokemon p);
 
 private:
 	Pokemon poke;
@@ -386,7 +407,7 @@ string PokemonAPI::TypeToString(POKETYPES t)
 }
 
 //a function to see pokemons weakness by comparing its type 
-string PokemonAPI::TypeWeakness(POKETYPES t)
+PokemonAPI::POKETYPES PokemonAPI::TypeWeakness(POKETYPES t, Pokemon p)
 {
 	string weak;
 	switch (t)
@@ -394,152 +415,151 @@ string PokemonAPI::TypeWeakness(POKETYPES t)
 	case NORMAL:
 	{
 		weak = "Rock, Ghost, Steel";
-		weaknesses.push_back(weak);
+		p.weaknesses.push_back(weak);
 		break;
 	}
 	case FIRE:
 	{
 		weak = "Ground, Rock, Water";
-		weaknesses.push_back(weak);
+		p.weaknesses.push_back(weak);
 		break;
 	}
 	case WATER:
 	{
 		weak = "Grass, Dragon, Electric";
-		weaknesses.push_back(weak);
+		p.weaknesses.push_back(weak);
 		break;
 	}
 	case GRASS:
 	{
 		weak = "Flying, Poison, Bug, Steel, Fire, Grass, Dragon, Ice";
-		weaknesses.push_back(weak);
+		p.weaknesses.push_back(weak);
 		break;
 	}
 	case ELECTRIC:
 	{
 		weak = "Ground, Grass, Electric, Dragon";
-		weaknesses.push_back(weak);
+		p.weaknesses.push_back(weak);
 		break;
 	}
 	case ICE:
 	{
 		weak = "Steel, Fire, Water,Rock, Fighting";
-		weaknesses.push_back(weak);
+		p.weaknesses.push_back(weak);
 		break;
 	}
 	case FIGHTING:
 	{
 		weak = "Flying, Poison, Psychic, Bug, Ghost, Fairy";
-		weaknesses.push_back(weak);
+		p.weaknesses.push_back(weak);
 		break;
 	}
 	case POISON:
 	{
 		weak = "Psychic, Ground, Rock, Ghost, Steel";
-		weaknesses.push_back(weak);
+		p.weaknesses.push_back(weak);
 		break;
 	}
 	case GROUND:
 	{
 		weak = "Flying, Bug, Grass, Water, Ice";
-		weaknesses.push_back(weak);
+		p.weaknesses.push_back(weak);
 		break;
 	}
 	case FLYING:
 	{
 		weak = "Rock, Steel, Electric, Ice";
-		weaknesses.push_back(weak);
+		p.weaknesses.push_back(weak);
 		break;
 	}
 	case PSYCHIC:
 	{
 		weak = "Steel, Bug, Dark, Ghost";
-		weaknesses.push_back(weak);
+		p.weaknesses.push_back(weak);
 		break;
 	}
 	case BUG:
 	{
 		weak = "Fighting, Flying, Poison, Ghost, Steel, Fire, Fairy, Rock";
-		weaknesses.push_back(weak);
+		p.weaknesses.push_back(weak);
 		break;
 	}
 	case ROCK:
 	{
 		weak = "Fighting, Ground, Steel, Water, Grass";
-		weaknesses.push_back(weak);
+		p.weaknesses.push_back(weak);
 		break;
 	}
 	case GHOST:
 	{
 		weak = "Normal, Dark";
-		weaknesses.push_back(weak);
+		p.weaknesses.push_back(weak);
 		break;
 	}
 	case DARK:
 	{
 		weak = "Fighting, Dark, Fairy, Bug";
-		weaknesses.push_back(weak);
+		p.weaknesses.push_back(weak);
 		break;
 	}
 	case DRAGON:
 	{
 		weak = "Steel, Fairy, Ice";
-		weaknesses.push_back(weak);
+		p.weaknesses.push_back(weak);
 		break;
 	}
 	case STEEL:
 	{
 		weak = "Fire, Water, Electric, Fighting, Ground";
-		weaknesses.push_back(weak);
+		p.weaknesses.push_back(weak);
 		break;
 	}
 	case FAIRY:
 	{
 		weak = "Poison, Steel, Fire";
-		weaknesses.push_back(weak);
+		p.weaknesses.push_back(weak);
 		break;
 	}
 	default:
 	{
 		weak = "Unknown";
-		weaknesses.push_back(weak);
+		p.weaknesses.push_back(weak);
 		break;
 	}
 
-	return type_to_print;
+	return t;
 
 	};
-}
 
-PokemonAPI::POKETYPES PokemonAPI::StringToType(string s)
-{
-	// Converts the a string to the enum POKETYPES
-	POKETYPES type_to_get = UNKNOWN;
-	map<string, POKETYPES> StringTypeMap = {
-		{"normal", NORMAL}, {"fire", FIRE}, {"water", WATER}, {"grass", GRASS },
-		{"electric", ELECTRIC }, {"ice", ICE}, { "fighting", FIGHTING}, { "poison", POISON},
-		{ "ground", GROUND}, { "flying", FLYING}, { "psychic", PSYCHIC}, { "bug", BUG},
-		{ "rock", ROCK }, { "ghost", GHOST}, { "dark", DARK}, { "dragon", DRAGON},
-		{ "steel", STEEL}, { "fairy", FAIRY}, { "unknown", UNKNOWN}
-	};
-
-	try
+	PokemonAPI::POKETYPES PokemonAPI::StringToType(string s)
 	{
-		type_to_get = StringTypeMap[s];
+		// Converts the a string to the enum POKETYPES
+		POKETYPES type_to_get = UNKNOWN;
+		map<string, POKETYPES> StringTypeMap = {
+			{"normal", NORMAL}, {"fire", FIRE}, {"water", WATER}, {"grass", GRASS },
+			{"electric", ELECTRIC }, {"ice", ICE}, { "fighting", FIGHTING}, { "poison", POISON},
+			{ "ground", GROUND}, { "flying", FLYING}, { "psychic", PSYCHIC}, { "bug", BUG},
+			{ "rock", ROCK }, { "ghost", GHOST}, { "dark", DARK}, { "dragon", DRAGON},
+			{ "steel", STEEL}, { "fairy", FAIRY}, { "unknown", UNKNOWN}
+		};
+
+		try
+		{
+			type_to_get = StringTypeMap[s];
+		}
+		catch (...) // If the string isn't in the map, or any other error comes up, just returns UNKNOWN 
+		{
+			type_to_get = UNKNOWN;
+		}
+
+		return type_to_get;
 	}
-	catch (...) // If the string isn't in the map, or any other error comes up, just returns UNKNOWN 
+
+	int main(int argc, char* argv[])
 	{
-		type_to_get = UNKNOWN;
+		Pokemon<PokemonAPI, PokemonAPI::Pokemon> p;
+		p.Connect("pokeapi.co");
+		p.Get("/api/v2/pokemon/");
+
+		return 0;
 	}
-	
-	return type_to_get;
-}
-
-int main(int argc, char* argv[])
-{
-	Pokemon<PokemonAPI, PokemonAPI::Pokemon> p;
-	p.Connect("pokeapi.co");
-	p.Get("/api/v2/pokemon/");
-
-	return 0;
-}
