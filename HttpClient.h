@@ -2,6 +2,7 @@
 #include <windows.h>
 #include <wininet.h>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <map>
 #include <cstdlib>
@@ -16,6 +17,7 @@ class HttpClient
 	HINTERNET hSession {};
 	HINTERNET hConnect {};
 
+	std::string authScheme;
 	std::string authToken;
 
 	// The name of the app requesting the data.
@@ -23,6 +25,24 @@ class HttpClient
 
 	// The header indicating the format of the returned data.
 	const std::string acceptType = "application/json";
+
+	// Header container
+	std::map<std::string, std::string> respHeaders;
+
+public:
+
+	// This function will attempt to locate the header 
+	// value given a key.
+	std::string GetHeaderValue(const std::string key)
+	{
+		auto search = respHeaders.find(key);
+		if (search != respHeaders.end())
+		{
+			return search->second;
+		}
+
+		return "";
+	}
 
 protected:
 
@@ -55,7 +75,11 @@ public:
 	}
 
 	///
-	void SetAuthToken(const std::string token = "") { authToken = token; }
+	void SetAuthToken(const std::string scheme, const std::string token = "") 
+	{ 
+		authScheme = scheme;
+		authToken = token; 
+	}
 
 	///
 	const std::string AddQueryParameters(const std::string uri, const std::map<std::string, std::string>& qp = {})
@@ -111,9 +135,9 @@ public:
 		std::string connHeader("Connection: keep-alive");
 		HttpAddRequestHeadersA(hRequest, connHeader.c_str(), static_cast<DWORD>(connHeader.length()), 0);
 
-		if (!authToken.empty())
+		if (!authScheme.empty() && !authToken.empty())
 		{
-			std::string authHeader("Authorization: token " + authToken + "\r\n");
+			std::string authHeader("Authorization: " + authScheme + " " + authToken + "\r\n");
 			HttpAddRequestHeadersA(hRequest, authHeader.c_str(), static_cast<DWORD>(authHeader.length()), 0);
 		}
 
@@ -123,6 +147,8 @@ public:
 			std::cerr << "HttpOpenRequest error : " << GetLastError() << std::endl;
 			return false;
 		}
+		///
+		SampleCodeOne(hRequest);
 
 		///
 		const int BUFFER_SIZE = 4096;
@@ -157,4 +183,83 @@ public:
 		InternetCloseHandle(hRequest);
 		return true;
 	}
+	
+	// Retrieving Headers Using a Constant
+	// https://docs.microsoft.com/en-us/windows/win32/wininet/retrieving-http-headers
+	bool SampleCodeOne(HINTERNET hHttp)
+	{
+		char* lpOutBuffer {};
+		DWORD dwSize = 0;
+
+	retry:
+
+		// This call will fail on the first pass, because
+		// no buffer is allocated.
+		if (!HttpQueryInfoA(hHttp, HTTP_QUERY_RAW_HEADERS_CRLF,(LPVOID)lpOutBuffer, &dwSize, NULL))
+		{
+			if (GetLastError() == ERROR_HTTP_HEADER_NOT_FOUND)
+			{
+				// Code to handle the case where the header isn't available.
+				return true;
+			}
+			else
+			{
+				// Check for an insufficient buffer.
+				if (GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+				{
+					// Allocate the necessary buffer.
+					lpOutBuffer = new char[dwSize];
+
+					// Retry the call.
+					goto retry;
+				}
+				else
+				{
+					// Error handling code.
+					if (lpOutBuffer)
+					{
+						delete[] lpOutBuffer;
+					}
+					return false;
+				}
+			}
+		}
+
+		if (lpOutBuffer)
+		{
+			ParseHeaders(lpOutBuffer);
+			delete[] lpOutBuffer;
+		}
+
+		return true;
+	}
+	///
+	void ParseHeaders(const char* pData)
+	{
+		std::string header;
+		std::istringstream resp(pData);
+		while (std::getline(resp, header) && header != "\r")
+		{
+			size_t index = header.find(':', 0);
+			if (index != std::string::npos)
+			{
+				respHeaders.insert(std::make_pair(trim(header.substr(0, index)), trim(header.substr(index + 1))));
+			}
+		}
+	}
+
+	// trim from start (in place)
+	void ltrim(std::string& s) const  {	s.erase(s.begin(), std::find_if(s.begin(), s.end(), [] (int ch) { return !std::isspace(ch); })); }
+
+	// trim from end (in place)
+	void rtrim(std::string& s) const { s.erase(std::find_if(s.rbegin(), s.rend(), [] (int ch) { return !std::isspace(ch); }).base(), s.end()); 	}
+
+	// trim from both ends (in place)
+	std::string trim(std::string s) const 
+	{
+		ltrim(s);
+		rtrim(s);
+		return s;
+	}
 };
+
