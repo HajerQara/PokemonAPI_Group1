@@ -4,8 +4,6 @@
 #include <vector>
 #include <cstdlib>
 #include "HttpClient.h"
-#include <conio.h>
-
 
 // Quell the nlohmann::json warnings.
 #pragma warning( push )
@@ -81,6 +79,7 @@ protected:
 
 			poke[i]->name = jp["results"][i]["name"].get<string>;
 			poke[i]->abilities = jp["results"][i]["name"]["abilities"][i]["ability"][i].get<string>;
+			poke[i]->types = jp["results"][i]["name"]["types"][i]["type"][i]["name"].get<string>;
 
 
 		};
@@ -91,7 +90,7 @@ protected:
 // Define operator<< as a standalone function
 template <class T, class S>
 std::ostream& operator<<(std::ostream& cout, const Pokemon<T, S>& pc) {
-	cout << pc << endl;
+	cout << << "Name: " << pc.name << std::endl; << endl;
 	return cout;
 };
 
@@ -110,7 +109,8 @@ public:
 	};
 
 	PokemonTypeData();
-	// GetStrengths() const;
+	
+	void sort(pokemon.begin(), pokemon.end(), sortPokeType); //sorts by type alphabetically
 
 private:
 	map<PokemonAPI::POKETYPES, TypeData> TypeStrengthsAndWeaknesses;
@@ -234,7 +234,7 @@ public:
 		string name;
 		vector<string> abilities;
 		vector<string> weaknesses;
-
+		vector<string> types;
 	};
 
 	void ParseWeakness(const json& jp)
@@ -274,18 +274,9 @@ public:
 	static POKETYPES StringToType(string s);
 	static POKETYPES TypeWeakness(POKETYPES t, Pokemon p);
 
-	int GetTotalPages(int TotalResults)
-	{ 
-		return round(TotalResults / TOTAL_PER_PAGE); 
-	}
-
-	int current_page = 1;
-	const int TOTAL_PER_PAGE = 10;
-
 private:
 	Pokemon poke;
 	vector<Pokemon> Pokemons;
-	
 };
 
 string PokemonAPI::TypeToString(POKETYPES t)
@@ -392,7 +383,26 @@ string PokemonAPI::TypeToString(POKETYPES t)
 	return type_to_print;
 }
 
-//a function to see pokemons weakness by comparing its type 
+//Searches based on Type of Pokemon entered by the user
+template <class T, class S>
+list<string> SearchPokeType(PokemonAPI::POKETYPES type, const Pokemon<T,S> &p) {
+	list<string> result;
+	for (const auto& p : type) {
+		if (std::find(p.types.begin(), p.types.end(), type) != p.types.end()) {
+			result.push_back(p.name);
+		}
+	}
+	return result;
+}
+
+//Compares the types to later sort alphabetically 
+template <class T, class S>
+bool sortPokeType(const Pokemon<T, S>& p, const Pokemon<T, S> & c) {
+	return p.type < c.type;
+}
+
+
+//A function to see pokemons weakness by comparing its type 
 PokemonAPI::POKETYPES PokemonAPI::TypeWeakness(POKETYPES t, Pokemon p)
 {
 	string weak;
@@ -627,6 +637,7 @@ int main(int argc, char* argv[])
 			// p.current_page = 1;
 			// p.Get("/api/v2/type/" + search_term);
 			// cout << p << endl;
+
 		}
 
 		// If going to the previous page:
@@ -637,7 +648,7 @@ int main(int argc, char* argv[])
 			else
 			{
 				p.current_page += 1;
-				
+
 				cout << p << endl;
 			}*/
 		}
@@ -650,7 +661,7 @@ int main(int argc, char* argv[])
 			else
 			{
 				p.current_page -= 1;
-				
+
 				cout << p << endl;
 			}*/
 		}
