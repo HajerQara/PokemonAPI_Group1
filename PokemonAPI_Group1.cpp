@@ -278,7 +278,7 @@ string PokemonAPI::TypeToString(POKETYPES t)
 
 //Searches based on Type of Pokemon entered by the user
 template <class T, class S>
-list<string> SearchPokeType(PokemonAPI::POKETYPES type, const Pokemon<T,S> &p) {
+list<string> SearchPokeType(PokemonAPI::POKETYPES type, const Pokemon<T, S>& p) {
 	list<string> result;
 	for (const auto& p : type) {
 		if (std::find(p.types.begin(), p.types.end(), type) != p.types.end()) {
@@ -290,7 +290,7 @@ list<string> SearchPokeType(PokemonAPI::POKETYPES type, const Pokemon<T,S> &p) {
 
 //Compares the types to later sort alphabetically 
 template <class T, class S>
-bool sortPokeType(const Pokemon<T, S>& p, const Pokemon<T, S> & c) {
+bool sortByType(const Pokemon<T, S>& p, const Pokemon<T, S>& c) {
 	return p.type < c.type;
 }
 
