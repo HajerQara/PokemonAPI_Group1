@@ -29,6 +29,7 @@ private:
 public:
 	Pokemon() {};
 	~Pokemon() {};
+	int current_page = 1;
 
 	S& operator[](int i)
 	{
@@ -92,7 +93,7 @@ protected:
 // Define operator<< as a standalone function
 template <class T, class S>
 std::ostream& operator<<(std::ostream& cout, const Pokemon<T, S>& pc) {
-	cout << << "Name: " << pc.name << std::endl; << endl;
+	cout << "" << "Name: " << pc.name << std::endl; << endl;
 	return cout;
 };
 
@@ -467,7 +468,7 @@ public:
 	~PokemonTypeData();
 	// GetStrengths() const;
 
-	void sort(pokemon.begin(), pokemon.end(), sortPokeType); //sorts by type alphabetically
+	// void sort(pokemon.begin(), pokemon.end(), sortPokeType); //sorts by type alphabetically
 
 	void StartOfData() { data.clear(); };
 
@@ -649,10 +650,52 @@ list<string> PokemonTypeData::GetQuadStrength(PokemonAPI::POKETYPES typeOne, Pok
 
 list<string> PokemonTypeData::GetDoubleStrength(PokemonAPI::POKETYPES typeOne, PokemonAPI::POKETYPES typeTwo)
 {
+	list<string> TypeValues = { };
+	list<PokemonAPI::POKETYPES> FirstTypeDoubles = { }; // First type's 2x strengths
+	bool FoundFirst = false;
 
+	for (auto pair : *TypeStrengthsAndWeaknesses)
+	{
+		if (!FoundFirst && (pair.first == typeOne || pair.first == typeTwo))
+		{
+			for (PokemonAPI::POKETYPES t : pair.second.DoubleDamageTo)
+				FirstTypeDoubles.emplace_back(t);
+			FoundFirst = true;
+			continue;
+		}
+		else if (FoundFirst && (pair.first == typeOne || pair.first == typeTwo))
+		{
+			for (PokemonAPI::POKETYPES t : pair.second.DoubleDamageTo)
+			{
+				bool match_found = false;
+				for (PokemonAPI::POKETYPES f : FirstTypeDoubles)
+				{
+					if (t == f) // If there's two 2x strengths, don't add to the 2x list
+					{
+						match_found = true;
+						break;
+					}
+				}
+				
+				if (!match_found)
+					FirstTypeDoubles.emplace_back(t);
+			}
+			break;
+		}
+	}
+
+	for (PokemonAPI::POKETYPES t : FirstTypeDoubles)
+		TypeValues.emplace_back(PokemonAPI::TypeToString(t));
+
+	return TypeValues;
 }
 
 list<string> PokemonTypeData::GetHalfStrength(PokemonAPI::POKETYPES typeOne, PokemonAPI::POKETYPES typeTwo)
+{
+
+}
+
+list<string> PokemonTypeData::GetQuarterStrength(PokemonAPI::POKETYPES typeOne, PokemonAPI::POKETYPES typeTwo)
 {
 
 }
@@ -673,6 +716,11 @@ list<string> PokemonTypeData::GetDoubleWeak(PokemonAPI::POKETYPES typeOne, Pokem
 }
 
 list<string> PokemonTypeData::GetHalfWeak(PokemonAPI::POKETYPES typeOne, PokemonAPI::POKETYPES typeTwo)
+{
+
+}
+
+list<string> PokemonTypeData::GetQuarterWeak(PokemonAPI::POKETYPES typeOne, PokemonAPI::POKETYPES typeTwo)
 {
 
 }
@@ -750,15 +798,14 @@ int main(int argc, char* argv[])
 		// For testing what each key's integer value is
 		// cout << c << endl;
 
-
 		// Searching by Name
 		if (c == KEY_E || c == KEY_ENTER)
 		{
 			cout << "Searching by name..." << endl;
 			search_term = EnterSearchTerm();
-			// p.current_page = 1;
-			// p.Get("/api/v2/pokemon/" + search_term);
-			// cout << p << endl;
+			p.current_page = 1;
+			p.Get("/api/v2/pokemon/" + search_term);
+			cout << p << endl;
 		}
 
 		// Searching by Type
@@ -766,23 +813,22 @@ int main(int argc, char* argv[])
 		{
 			cout << "Searching by type..." << endl;
 			search_term = EnterSearchTerm();
-			// p.current_page = 1;
-			// p.Get("/api/v2/type/" + search_term);
-			// cout << p << endl;
-
+			p.current_page = 1;
+			p.Get("/api/v2/type/" + search_term);
+			cout << p << endl;
 		}
 
 		// If going to the previous page:
 		else if (c == ARROW_UP)
 		{
-			/*if (p.current_page == 1)
+			if (p.current_page == 1)
 				cout << "No pages further back!" << endl;
 			else
 			{
 				p.current_page += 1;
 
 				cout << p << endl;
-			}*/
+			}
 		}
 
 		// If going to the next page:
