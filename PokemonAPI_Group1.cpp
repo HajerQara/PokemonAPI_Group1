@@ -73,6 +73,7 @@ protected:
 		// Finds out how many pokemon's in the query 
 		size_t pokeCount = jp["results"].size();
 
+		// Error came up here; "Syntax error: unexpected token 'identifier', expected 'type specifier'"
 		poke = new Poke * [pokeCount]; //creates an array that can hold all pokemons based on how many are queried
 
 		for (size_t i = 0; i < pokeCount; i++)
@@ -94,114 +95,6 @@ std::ostream& operator<<(std::ostream& cout, const Pokemon<T, S>& pc) {
 	cout << pc << endl;
 	return cout;
 };
-
-class PokemonTypeData
-{
-public:
-	struct TypeData
-	{
-		string TypeName;
-		list<PokemonAPI::POKETYPES> DoubleDamageTo;
-		list<PokemonAPI::POKETYPES> HalfDamageTo;
-		list<PokemonAPI::POKETYPES> NoDamageTo;
-		list<PokemonAPI::POKETYPES> DoubleDamageFrom;
-		list<PokemonAPI::POKETYPES> HalfDamageFrom;
-		list<PokemonAPI::POKETYPES> NoDamageFrom;
-	};
-
-	PokemonTypeData();
-	// GetStrengths() const;
-
-private:
-	map<PokemonAPI::POKETYPES, TypeData> TypeStrengthsAndWeaknesses;
-	void ParseJson(json j);
-};
-
-PokemonTypeData::PokemonTypeData()
-{
-	const string ALL_TYPES[] =
-	{
-		"normal", "fire", "water", "grass", "electric", "ice", "fighting", "poison", "ground", "flying",
-		"psychic", "bug", "rock", "ghost", "dark", "dragon", "steel", "fairy"
-	};
-
-	Pokemon<PokemonAPI, PokemonAPI::Pokemon> temp_server;
-	temp_server.Connect("pokeapi.co");
-
-	for (string t : ALL_TYPES)
-	{
-		// Get automatically calls ParseJson at end of data
-		temp_server.Get("/api/v2/type/" + t);
-	}
-}
-
-void PokemonTypeData::ParseJson(json j)
-{
-	TypeData temp_struct;
-
-	temp_struct.TypeName = j["name"].get<string>();
-
-	if (j.contains("damage_relations"))
-	{
-		auto obj = j["damage_relations"];
-		
-		// Takes the name of each type, converts to the enum PokeTypes, and emplaces in the proper list
-		if (obj.contains("double_damage_from"))
-		{
-			for (auto s : obj["double_damage_from"])
-			{
-				temp_struct.DoubleDamageFrom.emplace_back(
-					PokemonAPI::StringToType(s["name"].get<string>()));
-			}
-		}
-
-		if (obj.contains("half_damage_from"))
-		{
-			for (auto s : obj["half_damage_from"])
-			{
-				temp_struct.HalfDamageFrom.emplace_back(
-					PokemonAPI::StringToType(s["name"].get<string>()));
-			}
-		}
-
-		if (obj.contains("no_damage_from"))
-		{
-			for (auto s : obj["no_damage_from"])
-			{
-				temp_struct.NoDamageFrom.emplace_back(
-					PokemonAPI::StringToType(s["name"].get<string>()));
-			}
-		}
-
-		if (obj.contains("double_damage_to"))
-		{
-			for (auto s : obj["double_damage_to"])
-			{
-				temp_struct.DoubleDamageTo.emplace_back(
-					PokemonAPI::StringToType(s["name"].get<string>()));
-			}
-		}
-
-		if (obj.contains("half_damage_to"))
-		{
-			for (auto s : obj["half_damage_to"])
-			{
-				temp_struct.HalfDamageTo.emplace_back(
-					PokemonAPI::StringToType(s["name"].get<string>()));
-			}
-		}
-
-		if (obj.contains("no_damage_to"))
-		{
-			for (auto s : obj["no_damage_to"])
-			{
-				temp_struct.NoDamageTo.emplace_back(
-					PokemonAPI::StringToType(s["name"].get<string>()));
-			}
-		}
-	}
-
-}
 
 class PokemonAPI
 {
@@ -254,7 +147,6 @@ public:
 			Pokemons.push_back(p);
 		};
 	};
-
 
 	// Method to search for Pokemon by weakness
 	vector<Pokemon> pokemonWeakness(const string& weakness) const
@@ -512,10 +404,11 @@ PokemonAPI::POKETYPES PokemonAPI::TypeWeakness(POKETYPES t, Pokemon p)
 		p.weaknesses.push_back(weak);
 		break;
 	}
+	};
 
 	return t;
 
-	};
+	
 }
 
 PokemonAPI::POKETYPES PokemonAPI::StringToType(string s)
@@ -540,6 +433,241 @@ PokemonAPI::POKETYPES PokemonAPI::StringToType(string s)
 	}
 	
 	return type_to_get;
+}
+
+// Class designed to store each type's weaknesses and strengths for use in
+// determining a pokemon's weaknesses/strengths. Since Pokemon can have two
+// types, their weaknesses/strengths can vary significantly, and need to be
+// calculated.
+class PokemonTypeData : public HttpClient
+{
+public:
+	struct TypeData
+	{
+		string TypeName;
+		list<PokemonAPI::POKETYPES> DoubleDamageTo = { };
+		list<PokemonAPI::POKETYPES> HalfDamageTo = { };
+		list<PokemonAPI::POKETYPES> NoDamageTo = { };
+		list<PokemonAPI::POKETYPES> DoubleDamageFrom = { };
+		list<PokemonAPI::POKETYPES> HalfDamageFrom = { };
+		list<PokemonAPI::POKETYPES> NoDamageFrom = { };
+	};
+
+	PokemonTypeData();
+	~PokemonTypeData();
+	// GetStrengths() const;
+
+	void StartOfData() { data.clear(); };
+
+	void Data(const char arrData[], const unsigned int iSize)
+	{
+		data.insert(data.end(), arrData, arrData + iSize);
+	};
+
+	void EndOfData()
+	{
+		string json_data = "";
+		for (char c : data)
+		{
+			json_data += c;
+		}
+
+		json j = json::parse(json_data);
+		ParseJson(j);
+	};
+
+	friend ostream& operator<<(ostream& output, const PokemonTypeData& client);
+
+	list<string> GetQuadStrength(PokemonAPI::POKETYPES typeOne, PokemonAPI::POKETYPES typeTwo);
+	list<string> GetDoubleStrength(PokemonAPI::POKETYPES typeOne, PokemonAPI::POKETYPES typeTwo);
+	list<string> GetHalfStrength(PokemonAPI::POKETYPES typeOne, PokemonAPI::POKETYPES typeTwo);
+	list<string> GetQuarterStrength(PokemonAPI::POKETYPES typeOne, PokemonAPI::POKETYPES typeTwo);
+	list<string> GetNoStrength(PokemonAPI::POKETYPES typeOne, PokemonAPI::POKETYPES typeTwo);
+	list<string> GetQuadWeak(PokemonAPI::POKETYPES typeOne, PokemonAPI::POKETYPES typeTwo);
+	list<string> GetDoubleWeak(PokemonAPI::POKETYPES typeOne, PokemonAPI::POKETYPES typeTwo);
+	list<string> GetHalfWeak(PokemonAPI::POKETYPES typeOne, PokemonAPI::POKETYPES typeTwo);
+	list<string> GetQuarterWeak(PokemonAPI::POKETYPES typeOne, PokemonAPI::POKETYPES typeTwo);
+	list<string> GetNoWeak(PokemonAPI::POKETYPES typeOne, PokemonAPI::POKETYPES typeTwo);
+
+private:
+	map<PokemonAPI::POKETYPES, TypeData> *TypeStrengthsAndWeaknesses;
+	void ParseJson(json j);
+	vector<char> data;
+};
+
+PokemonTypeData::~PokemonTypeData()
+{
+	delete TypeStrengthsAndWeaknesses;
+}
+
+PokemonTypeData::PokemonTypeData()
+{
+	const string ALL_TYPES[] =
+	{
+		"normal", "fire", "water", "grass", "electric", "ice", "fighting", "poison", "ground", "flying",
+		"psychic", "bug", "rock", "ghost", "dark", "dragon", "steel", "fairy"
+	};
+
+	TypeStrengthsAndWeaknesses = new map<PokemonAPI::POKETYPES, TypeData>();
+
+	Connect("pokeapi.co");
+
+	for (string t : ALL_TYPES)
+	{
+		// Get automatically calls ParseJson at end of data
+		Get("/api/v2/type/" + t);
+	}
+}
+
+void PokemonTypeData::ParseJson(json j)
+{
+	TypeData temp_struct;
+
+	temp_struct.TypeName = j["name"].get<string>();
+
+	if (j.contains("damage_relations"))
+	{
+		auto obj = j["damage_relations"].get<json>();
+
+		// Takes the name of each type, converts to the enum PokeTypes, and emplaces in the proper list
+		if (obj.contains("double_damage_from"))
+		{
+			for (auto s : obj["double_damage_from"])
+			{
+				temp_struct.DoubleDamageFrom.emplace_back(
+					PokemonAPI::StringToType(s["name"].get<string>()));
+			}
+		}
+
+		if (obj.contains("half_damage_from"))
+		{
+			for (auto s : obj["half_damage_from"])
+			{
+				temp_struct.HalfDamageFrom.emplace_back(
+					PokemonAPI::StringToType(s["name"].get<string>()));
+			}
+		}
+
+		if (obj.contains("no_damage_from"))
+		{
+			for (auto s : obj["no_damage_from"])
+			{
+				temp_struct.NoDamageFrom.emplace_back(
+					PokemonAPI::StringToType(s["name"].get<string>()));
+			}
+		}
+
+		if (obj.contains("double_damage_to"))
+		{
+			for (auto s : obj["double_damage_to"])
+			{
+				temp_struct.DoubleDamageTo.emplace_back(
+					PokemonAPI::StringToType(s["name"].get<string>()));
+			}
+		}
+
+		if (obj.contains("half_damage_to"))
+		{
+			for (auto s : obj["half_damage_to"])
+			{
+				temp_struct.HalfDamageTo.emplace_back(
+					PokemonAPI::StringToType(s["name"].get<string>()));
+			}
+		}
+
+		if (obj.contains("no_damage_to"))
+		{
+			for (auto s : obj["no_damage_to"])
+			{
+				temp_struct.NoDamageTo.emplace_back(
+					PokemonAPI::StringToType(s["name"].get<string>()));
+			}
+		}
+	}
+
+	TypeStrengthsAndWeaknesses->emplace(
+		PokemonAPI::StringToType(temp_struct.TypeName), temp_struct);
+}
+
+ostream& operator<<(ostream& output, const PokemonTypeData& client)
+{
+	for (auto type_data : *client.TypeStrengthsAndWeaknesses)
+	{
+		output << type_data.second.TypeName << ", 2x to: ";
+		for (auto strength : type_data.second.DoubleDamageTo)
+			output << PokemonAPI::TypeToString(strength) << ", ";
+		output << endl;
+	}
+		
+	return output;
+}
+
+list<string> PokemonTypeData::GetQuadStrength(PokemonAPI::POKETYPES typeOne, PokemonAPI::POKETYPES typeTwo)
+{
+	list<string> TypeValues = { };
+	list<PokemonAPI::POKETYPES> FirstTypeDoubles = { }; // First type's 2x strengths
+	bool FoundFirst = false;
+
+	for (auto pair : *TypeStrengthsAndWeaknesses)
+	{
+		if (!FoundFirst && (pair.first == typeOne || pair.first == typeTwo))
+		{
+			for (PokemonAPI::POKETYPES t : pair.second.DoubleDamageTo)
+				FirstTypeDoubles.emplace_back(t);
+			FoundFirst = true;
+			continue;
+		}
+		else if (FoundFirst && (pair.first == typeOne || pair.first == typeTwo))
+		{
+			for (PokemonAPI::POKETYPES t : pair.second.DoubleDamageTo)
+			{
+				for (PokemonAPI::POKETYPES f : FirstTypeDoubles)
+					if (t == f) // If there's two 2x strengths, add to the 4x list
+					{
+						TypeValues.emplace_back(PokemonAPI::TypeToString(t));
+						break;
+					}
+			}
+			break;
+		}
+	}
+
+	return TypeValues;
+}
+
+list<string> PokemonTypeData::GetDoubleStrength(PokemonAPI::POKETYPES typeOne, PokemonAPI::POKETYPES typeTwo)
+{
+
+}
+
+list<string> PokemonTypeData::GetHalfStrength(PokemonAPI::POKETYPES typeOne, PokemonAPI::POKETYPES typeTwo)
+{
+
+}
+
+list<string> PokemonTypeData::GetNoStrength(PokemonAPI::POKETYPES typeOne, PokemonAPI::POKETYPES typeTwo)
+{
+
+}
+
+list<string> PokemonTypeData::GetQuadWeak(PokemonAPI::POKETYPES typeOne, PokemonAPI::POKETYPES typeTwo)
+{
+
+}
+
+list<string> PokemonTypeData::GetDoubleWeak(PokemonAPI::POKETYPES typeOne, PokemonAPI::POKETYPES typeTwo)
+{
+
+}
+
+list<string> PokemonTypeData::GetHalfWeak(PokemonAPI::POKETYPES typeOne, PokemonAPI::POKETYPES typeTwo)
+{
+
+}
+
+list<string> PokemonTypeData::GetNoWeak(PokemonAPI::POKETYPES typeOne, PokemonAPI::POKETYPES typeTwo)
+{
+
 }
 
 string EnterSearchTerm()
@@ -577,11 +705,11 @@ int main(int argc, char* argv[])
 	// Key codes for use in UI
 	const int ARROW_UP = 72;
 	const int ARROW_DOWN = 80;
-	const int KEY_ESCAPE = 27;		// Exit button is ESCAPE
+	const int KEY_ESCAPE = 27;	// Exit button is ESCAPE
 	const int KEY_E = 101;		// Enter search term with E key
-	// const int KEY_O = 111;		// Unused
+	// const int KEY_O = 111;	// Unused
 	const int KEY_ENTER = 13;
-	const int KEY_T = 116;
+	const int KEY_T = 116;		// Search by Type
 
 	string search_term = "";
 	int c = 0; // The char that is being accessed whenever a key is pressed
@@ -593,6 +721,8 @@ int main(int argc, char* argv[])
 		<< "||||||||||||||| Welcome to the Pokemon App! |||||||||||||||||||||" << endl
 		<< "|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||" << endl << endl;
 
+	// Initializes type data source, pulls strengths/weaknesses for each type
+	PokemonTypeData t;
 
 	Pokemon<PokemonAPI, PokemonAPI::Pokemon> p;
 	p.Connect("pokeapi.co");
