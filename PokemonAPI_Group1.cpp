@@ -3,6 +3,7 @@
 #include <list>
 #include <vector>
 #include <cstdlib>
+#include <conio.h>
 #include "HttpClient.h"
 
 // Quell the nlohmann::json warnings.
