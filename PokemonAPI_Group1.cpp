@@ -67,25 +67,25 @@ protected:
 
 	void ParseJson()
 	{
-		// Parse the JSON data
-		json jp = json::parse(jsonData);
+		//// Parse the JSON data
+		//json jp = json::parse(jsonData);
 
-		// Finds out how many pokemon's in the query 
-		size_t pokeCount = jp["results"].size();
+		//// Finds out how many pokemon's in the query 
+		//size_t pokeCount = jp["results"].size();
 
-		// Error came up here; "Syntax error: unexpected token 'identifier', expected 'type specifier'"
-		poke = new Poke * [pokeCount]; //creates an array that can hold all pokemons based on how many are queried
+		//// Error came up here; "Syntax error: unexpected token 'identifier', expected 'type specifier'"
+		//poke = new Poke * [pokeCount]; //creates an array that can hold all pokemons based on how many are queried
 
-		for (size_t i = 0; i < pokeCount; i++)
-		{
-			poke[i] = new Poke;
+		//for (size_t i = 0; i < pokeCount; i++)
+		//{
+		//	poke[i] = new Poke;
 
-			poke[i]->name = jp["results"][i]["name"].get<string>;
-			poke[i]->abilities = jp["results"][i]["name"]["abilities"][i]["ability"][i].get<string>;
-			poke[i]->types = jp["results"][i]["name"]["types"][i]["type"][i]["name"].get<string>;
+		//	poke[i]->name = jp["results"][i]["name"].get<string>;
+		//	poke[i]->abilities = jp["results"][i]["name"]["abilities"][i]["ability"][i].get<string>;
+		//	poke[i]->types = jp["results"][i]["name"]["types"][i]["type"][i]["name"].get<string>;
 
 
-		};
+		//};
 
 	}
 };
@@ -93,7 +93,7 @@ protected:
 // Define operator<< as a standalone function
 template <class T, class S>
 std::ostream& operator<<(std::ostream& cout, const Pokemon<T, S>& pc) {
-	cout << "" << "Name: " << pc.name << std::endl; << endl;
+	cout << "" << "Name: " << pc.name << std::endl << endl;
 	return cout;
 };
 
@@ -606,8 +606,28 @@ ostream& operator<<(ostream& output, const PokemonTypeData& client)
 {
 	for (auto type_data : *client.TypeStrengthsAndWeaknesses)
 	{
-		output << type_data.second.TypeName << ", 2x to: ";
+		output << "Type Name: " << type_data.second.TypeName << "\n\t2x to: ";
 		for (auto strength : type_data.second.DoubleDamageTo)
+			output << PokemonAPI::TypeToString(strength) << ", ";
+
+		output << "\n\t0.5x to: ";
+		for (auto strength : type_data.second.HalfDamageTo)
+			output << PokemonAPI::TypeToString(strength) << ", ";
+
+		output << "\n\t0x to: ";
+		for (auto strength : type_data.second.NoDamageTo)
+			output << PokemonAPI::TypeToString(strength) << ", ";
+
+		output << "\n\t2x from: ";
+		for (auto strength : type_data.second.DoubleDamageFrom)
+			output << PokemonAPI::TypeToString(strength) << ", ";
+
+		output << "\n\t0.5x from: ";
+		for (auto strength : type_data.second.HalfDamageFrom)
+			output << PokemonAPI::TypeToString(strength) << ", ";
+
+		output << "\n\t0x from: ";
+		for (auto strength : type_data.second.NoDamageFrom)
 			output << PokemonAPI::TypeToString(strength) << ", ";
 		output << endl;
 	}
